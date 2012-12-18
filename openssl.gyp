@@ -13,11 +13,15 @@
         'PURIFY',
         'TERMIO',
         '_REENTRANT',
+        'OPENSSL_NO_HW',
+        'OPENSSL_NO_GOST',
         # We do not use TLS over UDP on Chromium so far.
         'OPENSSL_NO_DTLS1',
       ],
       'sources': [
         'openssl/ssl/bio_ssl.c',
+        'openssl/ssl/d1_clnt.c',
+        'openssl/ssl/d1_srvr.c',
         'openssl/ssl/d1_both.c',
         'openssl/ssl/d1_enc.c',
         'openssl/ssl/d1_lib.c',
@@ -562,7 +566,16 @@
         'openssl/crypto/x509v3/v3err.c',
       ],
       'conditions': [
-        ['os_posix==1 and OS!="android"', {
+        ['OS=="ios"', {
+          'defines!': [
+            'TERMIO',
+             'OPENSSL_NO_DTLS1',
+          ],
+          'defines': [
+            'TERMIOS',
+          ],
+        }],
+        ['os_posix==1 and OS!="android" and OS!="ios"', {
           'defines': [
             # ENGINESDIR must be defined if OPENSSLDIR is.
             'ENGINESDIR="/dev/null"',
@@ -580,12 +593,17 @@
             ],
           },
         }],
+        ['OS=="ios"', {
+          'variables': {
+            'openssl_config_path': 'config/ios',
+          }
+        }],
         ['OS=="android"', {
           'variables': {
             'openssl_config_path': 'config/android',
           },
         }],
-        ['target_arch == "arm"', {
+        ['target_arch == "arm" and OS!="ios"', {
           'sources!': [
             # Use assembly version of this source file for ARM.
             'openssl/crypto/aes/aes_core.c',
@@ -600,7 +618,7 @@
             'openssl/crypto/sha/asm/sha512-armv4.S',
           ],
         }],
-        ['target_arch == "ia32"', {
+        ['target_arch == "ia32" and OS!= "ios"', {
           'sources!': [
             # Use assembly version of this source file for ARM.
             'openssl/crypto/aes/aes_core.c',
